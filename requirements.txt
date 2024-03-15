@@ -7,7 +7,6 @@ Pillow==10.2.0
 plotly==5.15.0
 pycaret==3.0.4
 pygwalker==0.3.20
-pywin32==306
 requests==2.31.0
 scikit_learn==1.2.2
 seaborn==0.9.0
