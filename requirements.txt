@@ -9,7 +9,6 @@ pycaret
 pygwalker
 requests
 scikit_learn
-pywin32
 seaborn
 stocknews
 streamlit
