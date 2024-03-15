@@ -9,6 +9,7 @@ pycaret
 pygwalker
 requests
 scikit_learn
+pywin32
 seaborn
 stocknews
 streamlit
@@ -16,3 +17,4 @@ streamlit_lottie
 streamlit_option_menu
 streamlit_pandas_profiling
 yfinance
+yagmail
