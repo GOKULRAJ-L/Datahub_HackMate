@@ -563,7 +563,7 @@ def data():
                     st.write(f"News Sentiment {news_sentiment}")
 
         except Exception as e:
-            st.error("No  data available for this ticker ")
+            st.error(f"No  data available for this ticker : {e}")
 
     if selected == "mail":
         import streamlit as st
