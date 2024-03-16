@@ -563,7 +563,7 @@ def data():
                     st.write(f"News Sentiment {news_sentiment}")
 
         except Exception as e:
-            st.error(f"No  data available for this ticker : {e}")
+            st.error("No  data available for this ticker ")
 
     if selected == "mail":
         import streamlit as st
@@ -615,22 +615,253 @@ def data():
     
 
     if selected ==  "Own Visual":
-        st.title('Tableau')
-        choice = st.selectbox("Select File type:", ["XLSX", "CSV"])
+        import streamlit as st
+        import pandas as pd
+        import plotly.express as px
+        from io import BytesIO
+        import base64
 
-        if choice == "XLSX":
-            uploaded_file = st.file_uploader('Choose an XLSX file', type='xlsx')
-            if uploaded_file is None:
-                st.error("Please select a dataset.")
-            else:
-                df = pd.read_excel(uploaded_file)
+        def generate_html_download_link(fig):
+            """
+            Generates a download link for Plotly chart as HTML file.
+            """
+            try:
+                html_bytes = fig.to_html(full_html=False, include_plotlyjs='cdn').encode()
+                b64 = base64.b64encode(html_bytes).decode()
+                href = f'<a href="data:text/html;base64,{b64}" download="plot.html">Download HTML</a>'
+                st.markdown(href, unsafe_allow_html=True)
+            except Exception as e:
+                st.error(f"An error occurred: {str(e)}")
 
-        if choice == "CSV":
-            uploaded_file = st.file_uploader('Choose a CSV file', type='csv')
-            if uploaded_file is None:
-                st.error("Please select a dataset.")
-            else:
-                df = pd.read_csv(uploaded_file)
+        st.title('Own Visual')
+
+        choice = st.sidebar.selectbox("Select File type:", ["XLSX", "CSV"])
+
+        try:
+            if choice == "XLSX":
+                df_file = st.sidebar.file_uploader('Choose an XLSX file', type='xlsx')
+                if df_file is None:
+                    st.error("Please select a dataset.")
+                else:
+                    df = pd.read_excel(df_file)
+
+            if choice == "CSV":
+                df_file = st.sidebar.file_uploader('Choose a CSV file', type='csv')
+                if df_file is None:
+                    st.error("Please select a dataset.")
+                else:
+                    df = pd.read_csv(df_file)
+        except Exception as e:
+            st.error(f"An error occurred: {str(e)}")
+
+        try:
+            choice = st.sidebar.radio("Select chart type:", ["Comparison Chart", "Single Column Chart"])
+
+            if choice == "Comparison Chart":
+                st.sidebar.write("### Comparison Chart")
+                X = st.sidebar.selectbox("Select first column to compare:", options=df.columns)
+                Y = st.sidebar.selectbox("Select second column to compare:", options=df.columns)
+                
+                st.sidebar.subheader(f"Comparison Chart for {X} vs {Y}")
+                unique_key = f"{X}_{Y}_chart"
+                
+                choice_comp = st.sidebar.selectbox(f"SELECT CHART YOU WANT ", ["SCATTER", "PIE", "BAR", "LINE", "BOX", "VIOLIN", "HISTOGRAM", "AREA", "RADAR", "SCATTER_MATRIX", "HEATMAP", "PAIR_PLOT", "VIOLIN_AND_BOX"], key=unique_key)
+                
+                if choice_comp is not None:
+                    if choice_comp == "SCATTER":
+                        fig = px.scatter(
+                            df,
+                            x=X,
+                            y=Y,
+                            template='plotly_white',
+                            title=f'<b>Scatter Chart on {X} vs {Y}</b>'
+                        )
+                    elif choice_comp == "PIE":
+                        fig = px.pie(
+                            df,
+                            values=X,
+                            template='plotly_white',
+                            title=f'<b>PIE Distribution on {X}</b>'
+                        )
+                    elif choice_comp == "BAR":
+                        fig = px.bar(
+                            df,
+                            x=X,
+                            y=Y,
+                            template='plotly_white',
+                            title=f'<b>Bar Chart on {X} vs {Y}</b>'
+                        )
+                    elif choice_comp == "LINE":
+                        fig = px.line(
+                            df,
+                            x=X,
+                            y=Y,
+                            template='plotly_white',
+                            title=f'<b>Line Chart {X} vs {Y} </b>'
+                        )
+                    elif choice_comp == "BOX":
+                        fig = px.box(
+                            df,
+                            y=X,
+                            template='plotly_white',
+                            title=f'<b>Box Plot on {X}</b>'
+                        )
+                    elif choice_comp == "VIOLIN":
+                        fig = px.violin(
+                            df,
+                            y=X,
+                            template='plotly_white',
+                            title=f'<b>Violin Plot {X}</b>'
+                        )
+                    elif choice_comp == "HISTOGRAM":
+                        fig = px.histogram(
+                            df,
+                            x=X,
+                            template='plotly_white',
+                            title=f'<b>Histogram Chart on {X}</b>'
+                        )
+                    elif choice_comp == "AREA":
+                        fig = px.area(
+                            df,
+                            x=X,
+                            y=Y,
+                            template='plotly_white',
+                            title=f'<b>{X} vs {Y}</b>'
+                        )
+                    elif choice_comp == "RADAR":
+                        try:
+                            fig = px.line_polar(
+                                df,
+                                r=df[X],
+                                theta=df[Y],
+                                template='plotly_white',
+                                title=f'<b>Radar Chart on {X} vs {Y}</b>'
+                            )
+                            st.plotly_chart(fig)
+                            st.sidebar.subheader(f'Downloads for {X} vs {Y}:')
+                            generate_html_download_link(fig)
+                            st.sidebar.info("Task completed for comparison chart!!!!")
+                        except Exception as e:
+                            st.error(f"An error occurred while generating radar chart: {str(e)}")
+
+
+                    elif choice_comp == "SCATTER_MATRIX":
+                        fig = px.scatter_matrix(
+                            df,
+                            dimensions=[X, Y],
+                            template='plotly_white',
+                            title=f'<b>Scatter Matrix: {X} vs {Y}</b>'
+                        )
+                    elif choice_comp == "HEATMAP":
+                        try:
+                            numeric_df = df.select_dtypes(include=['float64', 'int64'])  
+                            fig = px.imshow(
+                                numeric_df.corr(),
+                                labels=dict(color="Correlation"),
+                                template='plotly_white',
+                                title=f'<b>Heatmap of Correlation Matrix</b>'
+                            )
+                            st.plotly_chart(fig)
+                            st.sidebar.subheader(f'Downloads for {X} vs {Y}:')
+                            generate_html_download_link(fig)
+                            st.sidebar.info("Task completed for comparison chart!!!!")
+                        except Exception as e:
+                            st.error(f"An error occurred while generating heatmap: {str(e)}")
+
+
+                    elif choice_comp == "PAIR_PLOT":
+                        fig = px.scatter_matrix(df)
+                        fig.show()
+                    elif choice_comp == "VIOLIN_AND_BOX":
+                        fig = px.violin(
+                            df,
+                            y=X,
+                            template='plotly_white',
+                            title=f'<b>Violin and Box Plot {X}</b>'
+                        )
+                        fig.update_traces(box_visible=True, meanline_visible=True)
+
+                    st.plotly_chart(fig)
+                    
+                    st.sidebar.subheader(f'Downloads for {X} vs {Y}:')
+                    generate_html_download_link(fig)
+                    st.sidebar.info("Task completed for comparison chart!!!!")
+
+            if choice == "Single Column Chart":
+                st.sidebar.write("### Single Column Chart")
+                selected_column = st.selectbox("Select column:", options=df.columns)
+                st.write(f"Selected Column: {selected_column}")
+                st.write(f"Data for selected column:")
+                st.write(df[selected_column])
+
+                st.subheader(f"Chart for {selected_column}")
+                unique_key_single = f"{selected_column}_chart"
+                choice_single = st.selectbox(f"SELECT CHART YOU WANT ", ["PIE", "BAR", "LINE", "BOX", "VIOLIN", "HISTOGRAM", "AREA"], key=unique_key_single)
+                if choice_single is not None:
+                    if choice_single == "PIE":
+                        fig_single = px.pie(
+                            df,
+                            values=selected_column,
+                            template='plotly_white',
+                            title=f'<b>PIE Distribution on {selected_column}</b>'
+                        )
+                    elif choice_single == "BAR":
+                        fig_single = px.bar(
+                            df,
+                            x=df.index,
+                            y=selected_column,
+                            template='plotly_white',
+                            title=f'<b>Bar Chart on {selected_column}</b>'
+                        )
+                    elif choice_single == "LINE":
+                        fig_single = px.line(
+                            df,
+                            x=df.index,
+                            y=selected_column,
+                            template='plotly_white',
+                            title=f'<b>Line Chart on {selected_column}</b>'
+                        )
+                    elif choice_single == "BOX":
+                        fig_single = px.box(
+                            df,
+                            y=selected_column,
+                            template='plotly_white',
+                            title=f'<b>Box Plot on {selected_column}</b>'
+                        )
+                    elif choice_single == "VIOLIN":
+                        fig_single = px.violin(
+                            df,
+                            y=selected_column,
+                            template='plotly_white',
+                            title=f'<b>Violin Plot on {selected_column}</b>'
+                        )
+                    elif choice_single == "HISTOGRAM":
+                        fig_single = px.histogram(
+                            df,
+                            x=selected_column,
+                            template='plotly_white',
+                            title=f'<b>Histogram Chart on {selected_column}</b>'
+                        )
+                    elif choice_single == "AREA":
+                        fig_single = px.area(
+                            df,
+                            x=df.index,
+                            y=selected_column,
+                            template='plotly_white',
+                            title=f'<b>Area Chart on {selected_column}</b>'
+                        )
+
+                    st.plotly_chart(fig_single)
+                    
+                    st.subheader(f'Downloads for {selected_column}:')
+                    generate_html_download_link(fig_single)
+                    st.info("Task completed for single column chart!!!!")
+                else:
+                    st.error("Could you please select the chart type for single column chart")
+        except Exception as e:
+            print(f"An error occurred: {str(e)}")
+
+
 
 
 
