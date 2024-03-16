@@ -17,3 +17,4 @@ streamlit_option_menu
 streamlit_pandas_profiling
 yfinance
 yagmail
+openpyxl
